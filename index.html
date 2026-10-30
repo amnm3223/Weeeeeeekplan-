@@ -1,0 +1,1192 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>スマート週案・年間指導計画マネージャー</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Sans+JP:wght@300;400;500;700&display=swap');
+    body {
+      font-family: 'Noto Sans JP', 'Inter', sans-serif;
+      background-color: #f3f4f6;
+    }
+    .scrollbar-thin::-webkit-scrollbar {
+      height: 6px;
+      width: 6px;
+    }
+    .scrollbar-thin::-webkit-scrollbar-thumb {
+      background-color: #cbd5e1;
+      border-radius: 3px;
+    }
+  </style>
+</head>
+<body class="bg-slate-100 text-slate-800 min-h-screen flex flex-col">
+
+  <!-- Header Section -->
+  <header class="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-sm">
+    <div class="max-w-7xl mx-auto px-4 py-3 flex flex-wrap items-center justify-between gap-4">
+      <div class="flex items-center space-x-3">
+        <div class="bg-emerald-600 text-white p-2.5 rounded-xl shadow-sm">
+          <i class="fa-solid fa-calendar-week text-xl"></i>
+        </div>
+        <div>
+          <h1 class="text-xl font-bold text-slate-800 leading-tight">スマート教科指導時間割・週案マネージャー</h1>
+          <p class="text-xs text-slate-500">磐田市立豊田南小学校 令和8年度行事データ・時数計画完全対応</p>
+        </div>
+      </div>
+
+      <!-- Quick Controls -->
+      <div class="flex flex-wrap items-center gap-2 sm:gap-3">
+        <!-- Grade Selector -->
+        <div class="flex items-center bg-amber-50 border border-amber-200 rounded-lg px-2.5 py-1.5 shadow-sm">
+          <i class="fa-solid fa-graduation-cap text-amber-600 mr-2 text-sm"></i>
+          <span class="text-xs font-bold text-amber-900 mr-2">担当学年:</span>
+          <select id="select-current-grade" onchange="handleMainGradeChange(this.value)" class="bg-white text-xs font-bold text-slate-800 rounded border border-amber-300 px-2 py-1 focus:outline-none focus:ring-2 focus:ring-amber-500 cursor-pointer">
+            <option value="1">1年生</option>
+            <option value="2">2年生</option>
+            <option value="3">3年生</option>
+            <option value="4">4年生</option>
+            <option value="5" selected>5年生</option>
+            <option value="6">6年生</option>
+          </select>
+        </div>
+
+        <!-- Term Badge Indicator -->
+        <div class="flex items-center bg-emerald-50 border border-emerald-200 rounded-lg px-2.5 py-1.5 shadow-sm">
+          <i class="fa-solid fa-calendar-days text-emerald-600 mr-1.5 text-xs"></i>
+          <span id="current-term-badge" class="px-2 py-0.5 bg-emerald-600 text-white font-bold rounded text-xs">2学期</span>
+        </div>
+
+        <!-- Week Pattern Indicator & Rotation Info -->
+        <div class="flex items-center bg-indigo-50 border border-indigo-200 rounded-lg px-2.5 py-1.5 shadow-sm">
+          <span class="text-xs font-bold text-indigo-900 mr-1.5"><i class="fa-solid fa-rotate mr-1 text-indigo-600"></i>当週パターン:</span>
+          <span id="current-week-pattern-badge" class="px-2 py-0.5 bg-indigo-600 text-white font-bold rounded text-xs">A週</span>
+          <select id="manual-override-pattern" onchange="handlePatternOverride(this.value)" class="ml-1.5 bg-white text-[11px] font-semibold text-slate-700 rounded border border-indigo-200 px-1.5 py-0.5 focus:outline-none cursor-pointer">
+            <option value="AUTO">自動(ローテ)</option>
+            <option value="A">手動: A週</option>
+            <option value="B">手動: B週</option>
+            <option value="C">手動: C週</option>
+            <option value="D">手動: D週</option>
+          </select>
+        </div>
+
+        <button id="btn-apply-default" class="bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-medium px-3.5 py-2 rounded-lg border border-indigo-200 text-xs sm:text-sm flex items-center transition shadow-sm">
+          <i class="fa-solid fa-wand-magic-sparkles mr-1.5 text-indigo-500"></i> 基本時間割を反映
+        </button>
+
+        <!-- Annual Analytics Button -->
+        <button id="btn-open-annual-analytics" onclick="openAnnualAnalyticsModal()" class="bg-rose-600 hover:bg-rose-700 text-white font-medium px-3.5 py-2 rounded-lg text-xs sm:text-sm flex items-center transition shadow-sm">
+          <i class="fa-solid fa-chart-pie mr-1.5"></i> 年間時数計算・分析
+        </button>
+
+        <!-- Cloud Sync status button -->
+        <button id="btn-cloud-sync" onclick="toggleCloudSyncModal()" class="bg-sky-50 hover:bg-sky-100 text-sky-700 border border-sky-200 font-medium px-3.5 py-2 rounded-lg text-xs sm:text-sm flex items-center transition shadow-sm">
+          <i class="fa-solid fa-cloud-arrow-up mr-1.5 text-sky-600"></i> クラウド共有・同期
+        </button>
+
+        <!-- Data Import / Master Setup Button -->
+        <button id="btn-open-settings" class="bg-amber-600 hover:bg-amber-700 text-white font-medium px-3.5 py-2 rounded-lg text-xs sm:text-sm flex items-center transition shadow-sm">
+          <i class="fa-solid fa-sliders mr-1.5"></i> 設定・貼り付け
+        </button>
+
+        <button id="btn-open-curriculum" class="bg-slate-800 hover:bg-slate-900 text-white font-medium px-3.5 py-2 rounded-lg text-xs sm:text-sm flex items-center transition shadow-sm">
+          <i class="fa-solid fa-book-bookmark mr-1.5 text-emerald-400"></i> <span id="curriculum-btn-label">5年 指導計画</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Week Navigation & Summary Bar -->
+  <div class="bg-white border-b border-slate-200 shadow-2xs">
+    <div class="max-w-7xl mx-auto px-4 py-2 flex flex-wrap items-center justify-between gap-2">
+      <div class="flex items-center space-x-2">
+        <button onclick="navigateWeek(-1)" class="p-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 transition">
+          <i class="fa-solid fa-chevron-left text-xs"></i> 前週
+        </button>
+        <span id="week-display" class="text-xs sm:text-sm font-bold text-slate-800 px-2">2026年11月2日(月) ～ 11月6日(金)</span>
+        <button onclick="navigateWeek(1)" class="p-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 transition">
+          次週 <i class="fa-solid fa-chevron-right text-xs"></i>
+        </button>
+        <button onclick="navigateWeek(0)" class="text-xs font-medium text-emerald-600 hover:underline px-2">今週へ</button>
+      </div>
+
+      <div id="week-summary-badges" class="flex flex-wrap items-center gap-1.5 text-xs">
+        <!-- JS dynamically populated weekly count tags -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Timetable Grid Container -->
+  <main class="flex-1 max-w-7xl w-full mx-auto p-4">
+    <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden flex flex-col">
+      <!-- Grid Header Days -->
+      <div class="grid grid-cols-6 bg-slate-50 border-b border-slate-200 text-center font-bold text-xs" id="days-header-row">
+        <!-- JS populated headers with dates and events -->
+      </div>
+
+      <!-- Grid Body Slots (Events Row + Periods 1 to 6) -->
+      <div id="timetable-slots-container" class="divide-y divide-slate-200">
+        <!-- JS populated rows -->
+      </div>
+    </div>
+  </main>
+
+  <!-- Modal: Annual Analytics & Hours Audit -->
+  <div id="analytics-modal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-white rounded-2xl max-w-5xl w-full max-h-[92vh] flex flex-col shadow-2xl overflow-hidden">
+      <!-- Modal Header -->
+      <div class="p-4 sm:p-5 border-b border-slate-200 flex items-center justify-between bg-rose-50">
+        <div class="flex items-center space-x-2">
+          <i class="fa-solid fa-chart-pie text-rose-600 text-xl"></i>
+          <div>
+            <h2 class="text-lg font-bold text-slate-800"><span id="analytics-grade-label">5年生</span> 年間時数計算・予定過不足診断</h2>
+            <p class="text-xs text-slate-500">基本時間割からの変更点（赤字）と年間予定時数に対する過不足を一覧化</p>
+          </div>
+        </div>
+        <button onclick="closeAnnualAnalyticsModal()" class="text-slate-400 hover:text-slate-600 p-2 rounded-lg hover:bg-slate-200 transition">
+          <i class="fa-solid fa-xmark text-lg"></i>
+        </button>
+      </div>
+
+      <div class="p-5 overflow-y-auto flex-1 scrollbar-thin space-y-6">
+        <!-- Subject Audit Summary Cards -->
+        <div>
+          <h3 class="text-xs font-bold text-slate-700 uppercase tracking-wider mb-3 flex items-center">
+            <i class="fa-solid fa-calculator text-rose-500 mr-1.5"></i> 教科別 予定時数 vs 実施（配置）時数 診断結果
+          </h3>
+          <div id="analytics-subject-summary-cards" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+            <!-- JS populated -->
+          </div>
+        </div>
+
+        <!-- Annual Day-by-Day Timeline List -->
+        <div>
+          <div class="flex items-center justify-between mb-3">
+            <h3 class="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center">
+              <i class="fa-solid fa-list-check text-indigo-500 mr-1.5"></i> 1年間の授業配置一覧 (月〜金・授業日)
+            </h3>
+            <span class="text-[11px] text-slate-500 bg-slate-100 px-2 py-0.5 rounded border">
+              <span class="text-rose-600 font-bold">赤文字/赤枠</span> = 基本時間割からの変更授業
+            </span>
+          </div>
+
+          <div class="bg-slate-50 p-3 rounded-xl border border-slate-200 text-xs font-mono max-h-[380px] overflow-y-auto scrollbar-thin space-y-1.5" id="analytics-day-lines-container">
+            <!-- JS Populated lines e.g. "10/10 国 体 算 国 音" -->
+          </div>
+        </div>
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="p-4 border-t border-slate-200 bg-slate-50 flex justify-between items-center">
+        <div class="text-xs text-slate-500">※変更（赤字）スロットをクリックすると、該当週にスキップできます。</div>
+        <button onclick="closeAnnualAnalyticsModal()" class="bg-slate-800 hover:bg-slate-900 text-white font-bold text-xs px-4 py-2 rounded-lg transition">
+          閉じる
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Master Settings -->
+  <div id="settings-modal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] flex flex-col shadow-2xl overflow-hidden">
+      <!-- Modal Header -->
+      <div class="p-4 sm:p-5 border-b border-slate-200 flex items-center justify-between bg-amber-50">
+        <div class="flex items-center space-x-2">
+          <i class="fa-solid fa-sliders text-amber-600 text-xl"></i>
+          <div>
+            <h2 class="text-lg font-bold text-slate-800">マスターデータ設定・各種一括貼り付け</h2>
+            <p class="text-xs text-slate-500">学期期間・学年別日課時数・年間指導計画・A/B/C/D週デフォルト時間割設定</p>
+          </div>
+        </div>
+        <button id="btn-close-settings" class="text-slate-400 hover:text-slate-600 p-2 rounded-lg hover:bg-slate-200 transition">
+          <i class="fa-solid fa-xmark text-lg"></i>
+        </button>
+      </div>
+
+      <!-- Tab Navigation -->
+      <div class="px-5 border-b border-slate-200 flex space-x-4 bg-white overflow-x-auto" id="settings-tabs">
+        <button onclick="switchSettingsTab('term-config')" id="tab-btn-term-config" class="py-3 text-xs sm:text-sm font-bold border-b-2 border-amber-600 text-amber-600 whitespace-nowrap">
+          ① 学期期間（1・2・3学期）設定
+        </button>
+        <button onclick="switchSettingsTab('rotation-config')" id="tab-btn-rotation-config" class="py-3 text-xs sm:text-sm font-bold border-b-2 border-transparent text-slate-500 hover:text-slate-800 whitespace-nowrap">
+          ② 週順ローテーション設定
+        </button>
+        <button onclick="switchSettingsTab('daily-hours')" id="tab-btn-daily-hours" class="py-3 text-xs sm:text-sm font-bold border-b-2 border-transparent text-slate-500 hover:text-slate-800 whitespace-nowrap">
+          ③ 日別・学年別時数設定
+        </button>
+        <button onclick="switchSettingsTab('curriculum-import')" id="tab-btn-curriculum-import" class="py-3 text-xs sm:text-sm font-bold border-b-2 border-transparent text-slate-500 hover:text-slate-800 whitespace-nowrap">
+          ④ 指導計画の貼り付け
+        </button>
+      </div>
+
+      <!-- Tab Content Area -->
+      <div class="p-5 overflow-y-auto flex-1 scrollbar-thin space-y-6">
+
+        <!-- Tab 0: Term Configuration -->
+        <div id="tab-content-term-config" class="space-y-4">
+          <div class="bg-emerald-50/70 p-4 rounded-xl border border-emerald-200 text-xs text-emerald-900 space-y-2">
+            <p class="font-bold text-emerald-950 text-sm"><i class="fa-solid fa-calendar-week mr-1.5 text-emerald-600"></i> 各学期（始業日〜終業日）の期間設定</p>
+            <p>1学期・2学期・3学期の各期間を設定すると、週案画面や年間分析画面で該当する学期名が自動判別・可視化されます。</p>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 bg-white p-4 rounded-xl border border-slate-200">
+            <!-- Term 1 -->
+            <div class="p-3 bg-slate-50 rounded-lg border border-slate-200 space-y-2">
+              <span class="font-bold text-xs text-slate-800 flex items-center"><i class="fa-solid fa-flag text-emerald-600 mr-1.5"></i> 1学期</span>
+              <div>
+                <label class="block text-[10px] font-semibold text-slate-500">始業日:</label>
+                <input type="date" id="term1-start" value="2026-04-07" onchange="updateTermDates()" class="w-full text-xs p-1.5 border border-slate-300 rounded bg-white font-bold">
+              </div>
+              <div>
+                <label class="block text-[10px] font-semibold text-slate-500">終業日:</label>
+                <input type="date" id="term1-end" value="2026-07-22" onchange="updateTermDates()" class="w-full text-xs p-1.5 border border-slate-300 rounded bg-white font-bold">
+              </div>
+            </div>
+
+            <!-- Term 2 -->
+            <div class="p-3 bg-slate-50 rounded-lg border border-slate-200 space-y-2">
+              <span class="font-bold text-xs text-slate-800 flex items-center"><i class="fa-solid fa-flag text-blue-600 mr-1.5"></i> 2学期</span>
+              <div>
+                <label class="block text-[10px] font-semibold text-slate-500">始業日:</label>
+                <input type="date" id="term2-start" value="2026-09-01" onchange="updateTermDates()" class="w-full text-xs p-1.5 border border-slate-300 rounded bg-white font-bold">
+              </div>
+              <div>
+                <label class="block text-[10px] font-semibold text-slate-500">終業日:</label>
+                <input type="date" id="term2-end" value="2026-12-23" onchange="updateTermDates()" class="w-full text-xs p-1.5 border border-slate-300 rounded bg-white font-bold">
+              </div>
+            </div>
+
+            <!-- Term 3 -->
+            <div class="p-3 bg-slate-50 rounded-lg border border-slate-200 space-y-2">
+              <span class="font-bold text-xs text-slate-800 flex items-center"><i class="fa-solid fa-flag text-purple-600 mr-1.5"></i> 3学期</span>
+              <div>
+                <label class="block text-[10px] font-semibold text-slate-500">始業日:</label>
+                <input type="date" id="term3-start" value="2027-01-07" onchange="updateTermDates()" class="w-full text-xs p-1.5 border border-slate-300 rounded bg-white font-bold">
+              </div>
+              <div>
+                <label class="block text-[10px] font-semibold text-slate-500">終業日:</label>
+                <input type="date" id="term3-end" value="2027-03-19" onchange="updateTermDates()" class="w-full text-xs p-1.5 border border-slate-300 rounded bg-white font-bold">
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tab 1: Week Rotation Config -->
+        <div id="tab-content-rotation-config" class="space-y-4 hidden">
+          <div class="bg-indigo-50/70 p-4 rounded-xl border border-indigo-200 text-xs text-indigo-900 space-y-2">
+            <p class="font-bold text-indigo-950 text-sm"><i class="fa-solid fa-rotate mr-1.5 text-indigo-600"></i> 週順（A/B/C/D週）自動ローテーション設定</p>
+            <p>標準の交代パターンと開始日基準を指定すると、週を進めるごとに自動的に指定パターンが選択されます。</p>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div>
+              <label class="block text-xs font-bold text-slate-700 mb-1">回転順パターン:</label>
+              <select id="rotation-sequence-type" class="w-full text-xs p-2 border border-slate-300 rounded-lg bg-white font-bold">
+                <option value="AB">A週 → B週 (交互2パターン)</option>
+                <option value="ABCD">A週 → B週 → C週 → D週 (4パターン)</option>
+                <option value="ABC">A週 → B週 → C週 (3パターン)</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-slate-700 mb-1">基準日 (月曜日):</label>
+              <input type="date" id="rotation-start-date" value="2026-11-02" class="w-full text-xs p-2 border border-slate-300 rounded-lg bg-white font-bold">
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-slate-700 mb-1">基準日のパターン:</label>
+              <select id="rotation-start-pattern" class="w-full text-xs p-2 border border-slate-300 rounded-lg bg-white font-bold">
+                <option value="A">A週</option>
+                <option value="B">B週</option>
+                <option value="C">C週</option>
+                <option value="D">D週</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tab 2: Daily Hours Per Grade -->
+        <div id="tab-content-daily-hours" class="space-y-4 hidden">
+          <div class="bg-slate-50 p-3.5 rounded-xl border border-slate-200 text-xs text-slate-600">
+            <p class="font-bold text-slate-800 mb-1"><i class="fa-solid fa-circle-info text-amber-500 mr-1"></i> 行事予定・全学年日別時数の貼り付け設定</p>
+            「日付(YYYY-MM-DD), 行事予定, 1年時数, 2年時数, 3年時数, 4年時数, 5年時数, 6年時数」のフォーマットで貼り付けるか、基本曜日のデフォルト時数を設定できます。
+          </div>
+
+          <div class="space-y-2">
+            <label class="block text-xs font-bold text-slate-700">特定日付の行事・学年別時数一括貼り付け (CSV/TSV):</label>
+            <textarea id="paste-calendar-events" rows="4" placeholder="2026-04-07, 入学式・始業式, 1, 3, 3, 3, 3, 3&#10;2026-05-30, ポプラっ子スポーツフェスティバル, 5, 5, 5, 5, 5, 5&#10;2026-10-20, 6年修学旅行1日目, 5, 5, 5, 5, 5, 6" class="w-full text-xs font-mono p-2.5 bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:outline-none"></textarea>
+            <button onclick="importCalendarEventsPaste()" class="px-3 py-1.5 bg-amber-600 hover:bg-amber-700 text-white rounded-lg text-xs font-bold transition">
+              日付別行事・時数を反映
+            </button>
+          </div>
+        </div>
+
+        <!-- Tab 3: Curriculum Plan Text Import -->
+        <div id="tab-content-curriculum-import" class="space-y-4 hidden">
+          <div class="bg-slate-50 p-3.5 rounded-xl border border-slate-200 text-xs text-slate-600">
+            <p class="font-bold text-slate-800 mb-1"><i class="fa-solid fa-circle-info text-amber-500 mr-1"></i> 年間指導計画の一括取り込み</p>
+            「単元名,時数」の形式でテキスト貼り付けして即座に登録可能です。
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label class="block text-xs font-bold text-slate-700 mb-1">対象学年:</label>
+              <select id="import-target-grade" class="w-full text-xs p-2 border border-slate-300 rounded-lg bg-white font-bold text-slate-800">
+                <option value="1">1年生</option>
+                <option value="2">2年生</option>
+                <option value="3">3年生</option>
+                <option value="4">4年生</option>
+                <option value="5" selected>5年生</option>
+                <option value="6">6年生</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-slate-700 mb-1">対象教科:</label>
+              <select id="import-target-subject" class="w-full text-xs p-2 border border-slate-300 rounded-lg bg-white font-bold text-slate-800">
+                <option value="国語">国語</option>
+                <option value="算数">算数</option>
+                <option value="社会">社会</option>
+                <option value="理科">理科</option>
+                <option value="音楽">音楽</option>
+                <option value="図工">図工</option>
+                <option value="体育">体育</option>
+                <option value="道徳">道徳</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="space-y-2">
+            <label class="block text-xs font-bold text-slate-700">指導計画データ（単元名, 時数）貼り付け:</label>
+            <textarea id="paste-curriculum-text" rows="6" placeholder="だいじょうぶだい, 8&#10;言葉の準備運動, 4&#10;言葉で伝える「物語の朗読」, 12" class="w-full text-xs font-mono p-2.5 bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:outline-none"></textarea>
+            <button onclick="importCurriculumPaste()" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold transition flex items-center">
+              <i class="fa-solid fa-file-import mr-1.5"></i> この内容を指導計画に登録
+            </button>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="p-4 border-t border-slate-200 bg-slate-50 flex justify-between items-center text-xs text-slate-500">
+        <div>入力した設定・データは保存され即座に計算に反映されます。</div>
+        <button id="btn-save-settings" class="bg-amber-600 hover:bg-amber-700 text-white font-medium px-4 py-2 rounded-lg transition">
+          設定を保存して閉じる
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Cloud Share & Backup Sync -->
+  <div id="cloud-modal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-5">
+      <div class="flex items-center justify-between border-b pb-3">
+        <h3 class="font-bold text-base text-slate-800 flex items-center">
+          <i class="fa-solid fa-cloud text-sky-500 mr-2"></i> クラウド共有・端末連携
+        </h3>
+        <button onclick="toggleCloudSyncModal()" class="text-slate-400 hover:text-slate-600">
+          <i class="fa-solid fa-xmark text-lg"></i>
+        </button>
+      </div>
+
+      <div class="space-y-3">
+        <label class="block text-xs font-bold text-slate-700">現在の共有ルームID（このIDで他端末と同期）:</label>
+        <div class="flex space-x-2">
+          <input type="text" id="cloud-room-id" readonly class="flex-1 bg-slate-100 border text-xs font-bold font-mono px-3 py-2 rounded-lg text-slate-800">
+          <button onclick="copyRoomId()" class="bg-sky-600 hover:bg-sky-700 text-white text-xs font-bold px-3 py-2 rounded-lg transition">
+            コピー
+          </button>
+        </div>
+      </div>
+
+      <div class="border-t pt-3 space-y-3">
+        <label class="block text-xs font-bold text-slate-700">別の共有ルームに接続・同期:</label>
+        <div class="flex space-x-2">
+          <input type="text" id="input-connect-room-id" placeholder="合言葉 / ルームIDを入力" class="flex-1 border text-xs px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500">
+          <button onclick="connectToRoom()" class="bg-slate-800 hover:bg-slate-900 text-white text-xs font-bold px-3 py-2 rounded-lg transition">
+            接続
+          </button>
+        </div>
+      </div>
+
+      <div class="border-t pt-3 flex items-center justify-between">
+        <button onclick="exportDataJson()" class="text-xs text-indigo-600 font-bold hover:underline flex items-center">
+          <i class="fa-solid fa-download mr-1"></i> JSONバックアップ出力
+        </button>
+        <label class="text-xs text-emerald-600 font-bold hover:underline cursor-pointer flex items-center">
+          <i class="fa-solid fa-upload mr-1"></i> JSON復元
+          <input type="file" accept=".json" onchange="importDataJson(event)" class="hidden">
+        </label>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Element -->
+  <div id="toast" class="fixed bottom-5 right-5 bg-slate-800 text-white px-4 py-3 rounded-xl shadow-lg text-xs sm:text-sm flex items-center space-x-2 transform translate-y-20 opacity-0 transition-all duration-300 z-50">
+    <i id="toast-icon" class="fa-solid fa-circle-check text-emerald-400 text-base"></i>
+    <span id="toast-message">メッセージ</span>
+  </div>
+
+  <!-- Firebase Script for Sync -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+    import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+    import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+    const appId = typeof __app_id !== 'undefined' ? __app_id : 'school-schedule-app';
+    let firebaseConfig = null;
+    try {
+      if (typeof __firebase_config !== 'undefined') firebaseConfig = JSON.parse(__firebase_config);
+    } catch(e) {}
+
+    let currentRoomId = localStorage.getItem('cloud_room_id') || ('room-' + Math.floor(1000 + Math.random() * 9000));
+    localStorage.setItem('cloud_room_id', currentRoomId);
+
+    window.cloudState = {
+      db: null,
+      auth: null,
+      roomId: currentRoomId,
+      unsub: null
+    };
+
+    if (firebaseConfig) {
+      const app = initializeApp(firebaseConfig);
+      const auth = getAuth(app);
+      const db = getFirestore(app);
+      window.cloudState.db = db;
+      window.cloudState.auth = auth;
+
+      const initAuth = async () => {
+        if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+          await signInWithCustomToken(auth, __initial_auth_token);
+        } else {
+          await signInAnonymously(auth);
+        }
+        setupFirestoreListener();
+      };
+      initAuth();
+    }
+
+    window.setupFirestoreListener = function() {
+      const db = window.cloudState.db;
+      if (!db) return;
+      if (window.cloudState.unsub) window.cloudState.unsub();
+
+      const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'rooms', window.cloudState.roomId);
+      window.cloudState.unsub = onSnapshot(docRef, (docSnap) => {
+        if (docSnap.exists()) {
+          const data = docSnap.data();
+          if (data && data.payload && !window.isSavingLocal) {
+            window.loadFullAppState(data.payload);
+          }
+        }
+      }, (err) => {
+        console.error("Cloud sync error:", err);
+      });
+    };
+
+    window.syncToCloud = async function(payload) {
+      const db = window.cloudState.db;
+      if (!db) return;
+      window.isSavingLocal = true;
+      try {
+        const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'rooms', window.cloudState.roomId);
+        await setDoc(docRef, {
+          payload: payload,
+          updatedAt: new Date().toISOString()
+        }, { merge: true });
+      } catch (e) {
+        console.error("Cloud push failed", e);
+      } finally {
+        setTimeout(() => { window.isSavingLocal = false; }, 1000);
+      }
+    };
+  </script>
+
+  <!-- Application Logic -->
+  <script>
+    const SUBJECT_CONFIG = {
+      '国語': { bg: 'bg-red-50', text: 'text-red-700', border: 'border-red-200', activeBg: 'bg-red-500', badge: 'bg-red-100 text-red-800' },
+      '算数': { bg: 'bg-blue-50', text: 'text-blue-700', border: 'border-blue-200', activeBg: 'bg-blue-500', badge: 'bg-blue-100 text-blue-800' },
+      '社会': { bg: 'bg-amber-50', text: 'text-amber-700', border: 'border-amber-200', activeBg: 'bg-amber-500', badge: 'bg-amber-100 text-amber-800' },
+      '理科': { bg: 'bg-emerald-50', text: 'text-emerald-700', border: 'border-emerald-200', activeBg: 'bg-emerald-500', badge: 'bg-emerald-100 text-emerald-800' },
+      '生活': { bg: 'bg-lime-50', text: 'text-lime-700', border: 'border-lime-200', activeBg: 'bg-lime-500', badge: 'bg-lime-100 text-lime-800' },
+      '音楽': { bg: 'bg-purple-50', text: 'text-purple-700', border: 'border-purple-200', activeBg: 'bg-purple-500', badge: 'bg-purple-100 text-purple-800' },
+      '図工': { bg: 'bg-orange-50', text: 'text-orange-700', border: 'border-orange-200', activeBg: 'bg-orange-500', badge: 'bg-orange-100 text-orange-800' },
+      '家庭': { bg: 'bg-yellow-50', text: 'text-yellow-800', border: 'border-yellow-200', activeBg: 'bg-yellow-500', badge: 'bg-yellow-100 text-yellow-800' },
+      '体育': { bg: 'bg-teal-50', text: 'text-teal-700', border: 'border-teal-200', activeBg: 'bg-teal-500', badge: 'bg-teal-100 text-teal-800' },
+      '道徳': { bg: 'bg-slate-100', text: 'text-slate-700', border: 'border-slate-300', activeBg: 'bg-slate-600', badge: 'bg-slate-200 text-slate-800' },
+      '学活': { bg: 'bg-slate-100', text: 'text-slate-700', border: 'border-slate-300', activeBg: 'bg-slate-600', badge: 'bg-slate-200 text-slate-800' },
+      '総合': { bg: 'bg-sky-50', text: 'text-sky-700', border: 'border-sky-200', activeBg: 'bg-sky-500', badge: 'bg-sky-100 text-sky-800' },
+      '外国語活動': { bg: 'bg-pink-50', text: 'text-pink-700', border: 'border-pink-200', activeBg: 'bg-pink-500', badge: 'bg-pink-100 text-pink-800' },
+      '外国語': { bg: 'bg-rose-50', text: 'text-rose-700', border: 'border-rose-200', activeBg: 'bg-rose-500', badge: 'bg-rose-100 text-rose-800' },
+      'クラブ': { bg: 'bg-indigo-50', text: 'text-indigo-700', border: 'border-indigo-200', activeBg: 'bg-indigo-500', badge: 'bg-indigo-100 text-indigo-800' },
+      '委員会': { bg: 'bg-indigo-50', text: 'text-indigo-700', border: 'border-indigo-200', activeBg: 'bg-indigo-500', badge: 'bg-indigo-100 text-indigo-800' },
+      '行事': { bg: 'bg-fuchsia-50', text: 'text-fuchsia-700', border: 'border-fuchsia-200', activeBg: 'bg-fuchsia-500', badge: 'bg-fuchsia-100 text-fuchsia-800' }
+    };
+
+    let currentGrade = '5';
+    let currentMondayDate = new Date(2026, 10, 2); // 2026-11-02
+
+    let schoolTermsConfig = {
+      term1: { start: '2026-04-07', end: '2026-07-22' },
+      term2: { start: '2026-09-01', end: '2026-12-23' },
+      term3: { start: '2027-01-07', end: '2027-03-19' }
+    };
+
+    let rotationSettings = {
+      sequenceType: 'AB',
+      startDate: '2026-11-02',
+      startPattern: 'A'
+    };
+
+    let manualPatternOverride = 'AUTO';
+
+    let dailyGradeHoursConfig = [
+      { '1': 4, '2': 5, '3': 5, '4': 5, '5': 5, '6': 5 }, // 月
+      { '1': 5, '2': 5, '3': 6, '4': 6, '5': 6, '6': 6 }, // 火
+      { '1': 5, '2': 5, '3': 5, '4': 5, '5': 5, '6': 5 }, // 水
+      { '1': 5, '2': 5, '3': 6, '4': 6, '5': 6, '6': 6 }, // 木
+      { '1': 4, '2': 5, '3': 5, '4': 6, '5': 6, '6': 6 }  // 金
+    ];
+
+    let calendarEventsMap = {
+      '2026-04-07': { event: '入学式・始業式', hours: { '1': 2, '2': 3, '3': 3, '4': 3, '5': 3, '6': 3 } },
+      '2026-04-09': { event: '避難訓練', hours: { '1': 5, '2': 5, '3': 5, '4': 5, '5': 5, '6': 5 } },
+      '2026-04-25': { event: 'ジュビロ磐田一斉観戦', hours: { '1': 4, '2': 4, '3': 5, '4': 5, '5': 5, '6': 5 } },
+      '2026-05-01': { event: '引き渡し訓練', hours: { '1': 3, '2': 3, '3': 3, '4': 3, '5': 3, '6': 3 } },
+      '2026-05-30': { event: 'ポプラっ子スポーツフェスティバル', hours: { '1': 5, '2': 5, '3': 5, '4': 5, '5': 5, '6': 5 } },
+      '2026-07-09': { event: '5年 焼津宿泊体験 1日目', hours: { '1': 4, '2': 4, '3': 5, '4': 5, '5': 6, '6': 6 } },
+      '2026-07-10': { event: '5年 焼津宿泊体験 2日目', hours: { '1': 4, '2': 4, '3': 5, '4': 5, '5': 6, '6': 6 } },
+      '2026-10-21': { event: '6年 修学旅行 1日目', hours: { '1': 4, '2': 5, '3': 5, '4': 6, '5': 6, '6': 6 } },
+      '2026-10-22': { event: '6年 修学旅行 2日目', hours: { '1': 4, '2': 5, '3': 5, '4': 6, '5': 6, '6': 6 } },
+      '2027-03-18': { event: '修了式・卒業式準備', hours: { '1': 3, '2': 3, '3': 3, '4': 3, '5': 5, '6': 3 } },
+      '2027-03-19': { event: '卒業式', hours: { '1': 0, '2': 0, '3': 0, '4': 0, '5': 3, '6': 3 } }
+    };
+
+    let timetablePatterns = {
+      'A': [
+        [{ subject: '国語' }, { subject: '算数' }, { subject: '理科' }, { subject: '国語' }, { subject: '社会' }],
+        [{ subject: '算数' }, { subject: '国語' }, { subject: '国語' }, { subject: '算数' }, { subject: '算数' }],
+        [{ subject: '理科' }, { subject: '社会' }, { subject: '音楽' }, { subject: '理科' }, { subject: '外国語' }],
+        [{ subject: '社会' }, { subject: '理科' }, { subject: '図工' }, { subject: '体育' }, { subject: '体育' }],
+        [{ subject: '体育' }, { subject: '外国語' }, { subject: '学活' }, { subject: '総合' }, { subject: '総合' }],
+        [{ subject: '' }, { subject: '委員会' }, { subject: '' }, { subject: 'クラブ' }, { subject: '道徳' }]
+      ],
+      'B': [
+        [{ subject: '算数' }, { subject: '国語' }, { subject: '国語' }, { subject: '社会' }, { subject: '国語' }],
+        [{ subject: '国語' }, { subject: '算数' }, { subject: '算数' }, { subject: '算数' }, { subject: '算数' }],
+        [{ subject: '社会' }, { subject: '理科' }, { subject: '理科' }, { subject: '理科' }, { subject: '体育' }],
+        [{ subject: '理科' }, { subject: '体育' }, { subject: '音楽' }, { subject: '外国語' }, { subject: '外国語' }],
+        [{ subject: '体育' }, { subject: '家庭' }, { subject: '図工' }, { subject: '家庭' }, { subject: '総合' }],
+        [{ subject: '' }, { subject: '道徳' }, { subject: '' }, { subject: '学活' }, { subject: '道徳' }]
+      ]
+    };
+
+    let gradeCurriculumDatabase = {
+      '5': {
+        '国語': { standardHours: 175, units: [{ name: '言葉の準備運動', hours: 4 }, { name: '銀色のうらから', hours: 8 }] },
+        '算数': { standardHours: 175, units: [{ name: '整数と小数', hours: 5 }, { name: '体積', hours: 9 }] }
+      }
+    };
+
+    let weeklySchedulesMap = {};
+
+    function formatDateISO(d) {
+      const year = d.getFullYear();
+      const month = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    }
+
+    function getWeekKey(d) {
+      return formatDateISO(d);
+    }
+
+    function computePatternForWeek(date) {
+      if (manualPatternOverride && manualPatternOverride !== 'AUTO') return manualPatternOverride;
+      const start = new Date(rotationSettings.startDate);
+      const diffTime = date.getTime() - start.getTime();
+      const diffWeeks = Math.floor(diffTime / (1000 * 3600 * 24 * 7));
+      const seq = rotationSettings.sequenceType === 'ABCD' ? ['A','B','C','D'] : ['A','B'];
+      const startIndex = seq.indexOf(rotationSettings.startPattern);
+      const idx = (startIndex + (diffWeeks % seq.length) + seq.length) % seq.length;
+      return seq[idx];
+    }
+
+    function getTermForDate(dateStr) {
+      if (dateStr >= schoolTermsConfig.term1.start && dateStr <= schoolTermsConfig.term1.end) return '1学期';
+      if (dateStr >= schoolTermsConfig.term2.start && dateStr <= schoolTermsConfig.term2.end) return '2学期';
+      if (dateStr >= schoolTermsConfig.term3.start && dateStr <= schoolTermsConfig.term3.end) return '3学期';
+      return '休業期間';
+    }
+
+    function updateTermDates() {
+      schoolTermsConfig.term1.start = document.getElementById('term1-start').value;
+      schoolTermsConfig.term1.end = document.getElementById('term1-end').value;
+      schoolTermsConfig.term2.start = document.getElementById('term2-start').value;
+      schoolTermsConfig.term2.end = document.getElementById('term2-end').value;
+      schoolTermsConfig.term3.start = document.getElementById('term3-start').value;
+      schoolTermsConfig.term3.end = document.getElementById('term3-end').value;
+      renderTimetable();
+    }
+
+    function getCurrentWeekTimetable() {
+      const key = getWeekKey(currentMondayDate);
+      if (!weeklySchedulesMap[key]) {
+        const pattern = computePatternForWeek(currentMondayDate);
+        const template = timetablePatterns[pattern] || timetablePatterns['A'];
+        weeklySchedulesMap[key] = JSON.parse(JSON.stringify(template));
+      }
+      return weeklySchedulesMap[key];
+    }
+
+    function calculateAssignedHoursCount() {
+      const counts = {};
+      Object.keys(weeklySchedulesMap).forEach(k => {
+        const grid = weeklySchedulesMap[k];
+        for (let p = 0; p < 6; p++) {
+          for (let d = 0; d < 5; d++) {
+            const subj = grid[p][d].subject;
+            if (subj) counts[subj] = (counts[subj] || 0) + 1;
+          }
+        }
+      });
+      return counts;
+    }
+
+    function getInferredUnitAndHour(subject, totalHourCount) {
+      const curriculum = gradeCurriculumDatabase[currentGrade] || {};
+      const subjectData = curriculum[subject];
+      if (!subjectData || !subjectData.units || subjectData.units.length === 0) {
+        return { unitName: `${subject} 基本学習`, currentHour: totalHourCount, totalUnitHours: 12 };
+      }
+      let acc = 0;
+      for (let unit of subjectData.units) {
+        if (totalHourCount <= acc + unit.hours) {
+          return { unitName: unit.name, currentHour: totalHourCount - acc, totalUnitHours: unit.hours };
+        }
+        acc += unit.hours;
+      }
+      const lastUnit = subjectData.units[subjectData.units.length - 1];
+      return { unitName: lastUnit.name, currentHour: lastUnit.hours, totalUnitHours: lastUnit.hours };
+    }
+
+    function renderTimetable() {
+      const activePattern = computePatternForWeek(currentMondayDate);
+      document.getElementById('current-week-pattern-badge').innerText = `${activePattern}週`;
+
+      const mondayISO = formatDateISO(currentMondayDate);
+      const currentTerm = getTermForDate(mondayISO);
+      const termBadge = document.getElementById('current-term-badge');
+      termBadge.innerText = currentTerm;
+      if (currentTerm === '1学期') termBadge.className = "px-2 py-0.5 bg-emerald-600 text-white font-bold rounded text-xs";
+      else if (currentTerm === '2学期') termBadge.className = "px-2 py-0.5 bg-blue-600 text-white font-bold rounded text-xs";
+      else if (currentTerm === '3学期') termBadge.className = "px-2 py-0.5 bg-purple-600 text-white font-bold rounded text-xs";
+      else termBadge.className = "px-2 py-0.5 bg-slate-500 text-white font-bold rounded text-xs";
+
+      const endDay = new Date(currentMondayDate);
+      endDay.setDate(endDay.getDate() + 4);
+      document.getElementById('week-display').innerText = 
+        `${currentMondayDate.getFullYear()}年 ${currentMondayDate.getMonth()+1}月${currentMondayDate.getDate()}日(月) ～ ${endDay.getMonth()+1}月${endDay.getDate()}日(金)`;
+
+      const headerRow = document.getElementById('days-header-row');
+      const dayNames = ['月', '火', '水', '木', '金'];
+      let headerHtml = `<div class="py-3 px-2 text-xs font-semibold text-slate-400 uppercase tracking-wider border-r border-slate-200 flex items-center justify-center">校時 / 曜日</div>`;
+
+      for (let d = 0; d < 5; d++) {
+        const dateTmp = new Date(currentMondayDate);
+        dateTmp.setDate(dateTmp.getDate() + d);
+        const dateStr = `${dateTmp.getMonth()+1}/${dateTmp.getDate()}`;
+
+        headerHtml += `
+          <div class="p-2.5 border-r border-slate-200 last:border-r-0 flex flex-col items-center justify-center">
+            <div class="text-xs text-slate-800 font-bold">${dateStr} (${dayNames[d]})</div>
+            <div class="text-[10px] text-indigo-600 font-semibold mt-0.5">【${activePattern}週】</div>
+          </div>
+        `;
+      }
+      headerRow.innerHTML = headerHtml;
+
+      const timetable = getCurrentWeekTimetable();
+      const defaultTemplate = timetablePatterns[activePattern] || timetablePatterns['A'];
+      const container = document.getElementById('timetable-slots-container');
+      container.innerHTML = '';
+
+      const counts = calculateAssignedHoursCount();
+
+      // 行事予定専用行
+      const eventRowDiv = document.createElement('div');
+      eventRowDiv.className = 'grid grid-cols-6 border-b-2 border-slate-300 bg-amber-50/60 min-h-[50px]';
+
+      const eventHeaderCell = document.createElement('div');
+      eventHeaderCell.className = 'p-2 bg-amber-100/70 border-r border-slate-200 flex items-center justify-center font-bold text-xs text-amber-900 shadow-2xs';
+      eventHeaderCell.innerHTML = `<i class="fa-solid fa-calendar-check mr-1.5 text-amber-600"></i>予定`;
+      eventRowDiv.appendChild(eventHeaderCell);
+
+      for (let d = 0; d < 5; d++) {
+        const dateTmp = new Date(currentMondayDate);
+        dateTmp.setDate(dateTmp.getDate() + d);
+        const dateISO = formatDateISO(dateTmp);
+        const eventInfo = calendarEventsMap[dateISO];
+        const eventText = eventInfo ? eventInfo.event : '通常日課';
+        const hasEvent = eventInfo && eventInfo.event && eventInfo.event !== '通常日課';
+
+        const eventCell = document.createElement('div');
+        eventCell.className = `p-2 border-r border-slate-200 last:border-r-0 flex items-center justify-center text-center text-xs font-bold ${
+          hasEvent ? 'bg-amber-100/90 text-amber-950 border-amber-300' : 'text-slate-400 bg-slate-50/50'
+        }`;
+        eventCell.innerHTML = `
+          <span class="line-clamp-2" title="${eventText}">
+            ${hasEvent ? '<i class="fa-solid fa-star text-amber-500 mr-1 text-[10px]"></i>' : ''}${eventText}
+          </span>
+        `;
+        eventRowDiv.appendChild(eventCell);
+      }
+      container.appendChild(eventRowDiv);
+
+      // 1〜6時間目グリッド
+      for (let p = 0; p < 6; p++) {
+        const rowDiv = document.createElement('div');
+        rowDiv.className = 'grid grid-cols-6 border-b border-slate-200 last:border-b-0 min-h-[105px]';
+
+        const periodCell = document.createElement('div');
+        periodCell.className = 'p-2 bg-slate-50 border-r border-slate-200 flex flex-col items-center justify-center text-center';
+        periodCell.innerHTML = `
+          <span class="text-sm font-bold text-slate-700">${p + 1} 時間目</span>
+          <span class="text-[10px] text-slate-400 mt-0.5">${8 + p}:50 - ${9 + p}:35</span>
+        `;
+        rowDiv.appendChild(periodCell);
+
+        for (let d = 0; d < 5; d++) {
+          const dayCell = document.createElement('div');
+          
+          const dateTmp = new Date(currentMondayDate);
+          dateTmp.setDate(dateTmp.getDate() + d);
+          const dateISO = formatDateISO(dateTmp);
+
+          let maxAllowedHour = dailyGradeHoursConfig[d][currentGrade] || 6;
+          if (calendarEventsMap[dateISO] && calendarEventsMap[dateISO].hours && calendarEventsMap[dateISO].hours[currentGrade] !== undefined) {
+            maxAllowedHour = calendarEventsMap[dateISO].hours[currentGrade];
+          }
+
+          const isAfterMaxHour = (p + 1) > maxAllowedHour;
+
+          dayCell.className = `p-2 border-r border-slate-200 last:border-r-0 transition-colors ${
+            isAfterMaxHour ? 'bg-slate-100/70' : 'hover:bg-slate-50/50'
+          }`;
+
+          if (isAfterMaxHour) {
+            dayCell.innerHTML = `
+              <div class="h-full min-h-[85px] flex flex-col items-center justify-center border border-dashed border-slate-200 rounded-lg text-slate-400 text-[11px] font-medium bg-slate-100/50">
+                授業なし (${maxAllowedHour}時数まで)
+              </div>
+            `;
+          } else {
+            const slot = timetable[p][d];
+            const defaultSubj = defaultTemplate[p][d].subject;
+            const isChangedFromDefault = (slot.subject !== defaultSubj) || slot.isCustom;
+
+            const subj = slot.subject;
+            const styleConfig = SUBJECT_CONFIG[subj] || { bg: 'bg-white', text: 'text-slate-800', border: 'border-slate-200' };
+
+            let unitInfoHtml = '';
+            if (subj) {
+              counts[subj] = (counts[subj] || 0) + 1;
+              const inferred = getInferredUnitAndHour(subj, counts[subj]);
+              const displayUnitName = slot.customUnitName !== undefined ? slot.customUnitName : inferred.unitName;
+
+              unitInfoHtml = `
+                <div class="flex items-center justify-between gap-1 w-full">
+                  <input type="text" value="${displayUnitName}" placeholder="単元名・指導内容を自由入力..." onchange="handleUnitTextChange(${p}, ${d}, this.value)" class="w-full text-[10px] font-medium text-slate-700 bg-white/70 px-1 py-0.5 rounded border border-slate-200 focus:outline-none focus:ring-1 focus:ring-indigo-400">
+                  <span class="text-[9px] font-bold px-1 rounded bg-slate-800 text-white whitespace-nowrap">${inferred.currentHour}/${inferred.totalUnitHours}時</span>
+                </div>
+              `;
+            } else {
+              unitInfoHtml = `<input type="text" value="${slot.customUnitName || ''}" placeholder="授業内容を入力..." onchange="handleUnitTextChange(${p}, ${d}, this.value)" class="w-full text-[10px] font-medium text-slate-500 bg-white/70 px-1 py-0.5 rounded border border-slate-200 focus:outline-none">`;
+            }
+
+            const changedHighlightStyle = isChangedFromDefault ? 'border-2 border-rose-500 shadow-md ring-2 ring-rose-200' : styleConfig.border;
+
+            dayCell.innerHTML = `
+              <div class="h-full flex flex-col justify-between p-2 rounded-lg border transition shadow-sm ${styleConfig.bg} ${changedHighlightStyle}">
+                <div class="flex items-center justify-between gap-1 mb-1">
+                  <select onchange="handleSubjectChange(${p}, ${d}, this.value)" class="w-full text-xs font-bold ${styleConfig.text} bg-transparent focus:outline-none cursor-pointer rounded py-0.5">
+                    <option value="">教科選択</option>
+                    ${Object.keys(SUBJECT_CONFIG).map(s => `
+                      <option value="${s}" ${subj === s ? 'selected' : ''}>${s}</option>
+                    `).join('')}
+                  </select>
+                  ${isChangedFromDefault ? '<span class="text-[9px] bg-rose-600 text-white font-bold px-1 rounded whitespace-nowrap">変更</span>' : ''}
+                </div>
+
+                <div class="text-[11px] font-medium text-slate-700 flex items-center justify-between">
+                  ${unitInfoHtml}
+                </div>
+
+                <div class="mt-1 pt-1 border-t border-slate-200/50 flex items-center justify-between text-[10px] text-slate-400">
+                  <input type="text" placeholder="メモ・ねらい..." value="${slot.notes || ''}" onchange="handleNoteChange(${p}, ${d}, this.value)" class="w-full bg-transparent border-0 text-[10px] text-slate-600 focus:outline-none">
+                </div>
+              </div>
+            `;
+          }
+          rowDiv.appendChild(dayCell);
+        }
+        container.appendChild(rowDiv);
+      }
+
+      renderWeekSummaryBadges();
+      triggerCloudSync();
+    }
+
+    function handleUnitTextChange(period, day, value) {
+      const timetable = getCurrentWeekTimetable();
+      timetable[period][day].customUnitName = value;
+      timetable[period][day].isCustom = true;
+      triggerCloudSync();
+    }
+
+    function handleSubjectChange(period, day, value) {
+      const timetable = getCurrentWeekTimetable();
+      timetable[period][day].subject = value;
+      renderTimetable();
+    }
+
+    function handleNoteChange(period, day, value) {
+      const timetable = getCurrentWeekTimetable();
+      timetable[period][day].notes = value;
+      triggerCloudSync();
+    }
+
+    function openAnnualAnalyticsModal() {
+      document.getElementById('analytics-grade-label').innerText = `${currentGrade}年生`;
+      renderAnnualAnalytics();
+      document.getElementById('analytics-modal').classList.remove('hidden');
+    }
+
+    function closeAnnualAnalyticsModal() {
+      document.getElementById('analytics-modal').classList.add('hidden');
+    }
+
+    function renderAnnualAnalytics() {
+      const subjectTotals = {};
+      const dayLinesHtml = [];
+
+      let startDate = new Date(2026, 3, 1);
+      let endDate = new Date(2027, 2, 31);
+
+      let mondayCursor = new Date(startDate);
+      const day = mondayCursor.getDay();
+      const diff = mondayCursor.getDate() - day + (day === 0 ? -6 : 1);
+      mondayCursor.setDate(diff);
+
+      while (mondayCursor <= endDate) {
+        const monKey = getWeekKey(mondayCursor);
+        const activePattern = computePatternForWeek(mondayCursor);
+        const defaultTemplate = timetablePatterns[activePattern] || timetablePatterns['A'];
+        
+        let weekGrid = weeklySchedulesMap[monKey];
+        if (!weekGrid) {
+          weekGrid = JSON.parse(JSON.stringify(defaultTemplate));
+        }
+
+        for (let d = 0; d < 5; d++) {
+          const dateTmp = new Date(mondayCursor);
+          dateTmp.setDate(dateTmp.getDate() + d);
+          if (dateTmp < startDate || dateTmp > endDate) continue;
+
+          const dateISO = formatDateISO(dateTmp);
+          let maxAllowedHour = dailyGradeHoursConfig[d][currentGrade] || 6;
+          if (calendarEventsMap[dateISO] && calendarEventsMap[dateISO].hours && calendarEventsMap[dateISO].hours[currentGrade] !== undefined) {
+            maxAllowedHour = calendarEventsMap[dateISO].hours[currentGrade];
+          }
+
+          if (maxAllowedHour === 0) continue;
+
+          const dateLabel = `${dateTmp.getMonth()+1}/${dateTmp.getDate()}`;
+          let daySubjectsText = [];
+
+          for (let p = 0; p < maxAllowedHour; p++) {
+            const slot = weekGrid[p][d];
+            const defaultSubj = defaultTemplate[p][d].subject;
+            const subj = slot.subject || '自';
+
+            if (slot.subject) {
+              subjectTotals[slot.subject] = (subjectTotals[slot.subject] || 0) + 1;
+            }
+
+            const isChanged = (slot.subject !== defaultSubj) || slot.isCustom;
+            if (isChanged) {
+              daySubjectsText.push(`<span class="text-rose-600 font-bold bg-rose-50 px-1 py-0.5 border border-rose-300 rounded">${subj}</span>`);
+            } else {
+              daySubjectsText.push(`<span class="text-slate-700 px-0.5">${subj}</span>`);
+            }
+          }
+
+          const lineStr = `
+            <div class="flex items-center justify-between p-2 rounded bg-white border border-slate-200 hover:border-slate-300">
+              <div class="flex items-center space-x-2">
+                <span class="font-bold text-slate-800 w-12">${dateLabel}</span>
+                <span class="text-[10px] text-slate-400">(${['月','火','水','木','金'][d]})</span>
+                <div class="flex items-center space-x-1.5 ml-2">
+                  ${daySubjectsText.join(' ')}
+                </div>
+              </div>
+              <span class="text-[10px] text-slate-400 font-normal">${maxAllowedHour}時数</span>
+            </div>
+          `;
+          dayLinesHtml.push(lineStr);
+        }
+
+        mondayCursor.setDate(mondayCursor.getDate() + 7);
+      }
+
+      document.getElementById('analytics-day-lines-container').innerHTML = dayLinesHtml.join('');
+
+      const curriculum = gradeCurriculumDatabase[currentGrade] || {};
+      const cardContainer = document.getElementById('analytics-subject-summary-cards');
+      let cardsHtml = '';
+
+      Object.keys(SUBJECT_CONFIG).forEach(subj => {
+        const standard = curriculum[subj] ? curriculum[subj].standardHours : 0;
+        if (standard === 0 && !subjectTotals[subj]) return;
+
+        const actual = subjectTotals[subj] || 0;
+        const diff = actual - standard;
+
+        let diffBadge = '';
+        if (diff < 0) {
+          diffBadge = `<span class="bg-rose-100 text-rose-800 text-[10px] font-bold px-1.5 py-0.5 rounded border border-rose-300"><i class="fa-solid fa-triangle-exclamation mr-1"></i>不足: ${Math.abs(diff)}時</span>`;
+        } else if (diff > 0) {
+          diffBadge = `<span class="bg-emerald-100 text-emerald-800 text-[10px] font-bold px-1.5 py-0.5 rounded border border-emerald-300"><i class="fa-solid fa-circle-check mr-1"></i>余剰: +${diff}時</span>`;
+        } else {
+          diffBadge = `<span class="bg-slate-100 text-slate-700 text-[10px] font-bold px-1.5 py-0.5 rounded">標準ぴったり</span>`;
+        }
+
+        cardsHtml += `
+          <div class="p-3 rounded-xl border bg-white shadow-sm flex flex-col justify-between">
+            <div class="flex items-center justify-between mb-1">
+              <span class="font-bold text-xs text-slate-800">${subj}</span>
+              ${diffBadge}
+            </div>
+            <div class="text-right">
+              <span class="text-lg font-extrabold ${diff < 0 ? 'text-rose-600' : 'text-slate-800'}">${actual}</span>
+              <span class="text-xs text-slate-400 font-semibold"> / ${standard}時</span>
+            </div>
+          </div>
+        `;
+      });
+
+      cardContainer.innerHTML = cardsHtml;
+    }
+
+    function navigateWeek(direction) {
+      if (direction === 0) {
+        const today = new Date();
+        const day = today.getDay();
+        const diffToMonday = today.getDate() - day + (day === 0 ? -6 : 1);
+        currentMondayDate = new Date(today.setDate(diffToMonday));
+      } else {
+        currentMondayDate.setDate(currentMondayDate.getDate() + (direction * 7));
+      }
+      renderTimetable();
+    }
+
+    function handleMainGradeChange(val) {
+      currentGrade = val;
+      document.getElementById('curriculum-btn-label').innerText = `${currentGrade}年 指導計画`;
+      renderTimetable();
+    }
+
+    function handlePatternOverride(val) {
+      manualPatternOverride = val;
+      renderTimetable();
+    }
+
+    function applyDefaultPattern() {
+      const pattern = computePatternForWeek(currentMondayDate);
+      const key = getWeekKey(currentMondayDate);
+      const template = timetablePatterns[pattern] || timetablePatterns['A'];
+      weeklySchedulesMap[key] = JSON.parse(JSON.stringify(template));
+      renderTimetable();
+      showToast(`${pattern}週の標準時間割を反映しました`);
+    }
+
+    function renderWeekSummaryBadges() {
+      const timetable = getCurrentWeekTimetable();
+      const counts = {};
+      for (let p = 0; p < 6; p++) {
+        for (let d = 0; d < 5; d++) {
+          const dateTmp = new Date(currentMondayDate);
+          dateTmp.setDate(dateTmp.getDate() + d);
+          const dateISO = formatDateISO(dateTmp);
+          let maxAllowedHour = dailyGradeHoursConfig[d][currentGrade] || 6;
+          if (calendarEventsMap[dateISO] && calendarEventsMap[dateISO].hours && calendarEventsMap[dateISO].hours[currentGrade] !== undefined) {
+            maxAllowedHour = calendarEventsMap[dateISO].hours[currentGrade];
+          }
+          if ((p + 1) <= maxAllowedHour) {
+            const subj = timetable[p][d].subject;
+            if (subj) counts[subj] = (counts[subj] || 0) + 1;
+          }
+        }
+      }
+
+      const container = document.getElementById('week-summary-badges');
+      let html = '<span class="text-slate-400 mr-1 self-center">週間時数:</span>';
+      Object.keys(counts).forEach(s => {
+        const cfg = SUBJECT_CONFIG[s] || { badge: 'bg-slate-100 text-slate-800' };
+        html += `<span class="px-2 py-0.5 rounded ${cfg.badge} font-bold">${s}: ${counts[s]}時間</span>`;
+      });
+      container.innerHTML = html;
+    }
+
+    function toggleCloudSyncModal() {
+      const modal = document.getElementById('cloud-modal');
+      document.getElementById('cloud-room-id').value = window.cloudState ? window.cloudState.roomId : '';
+      modal.classList.toggle('hidden');
+    }
+
+    function copyRoomId() {
+      const input = document.getElementById('cloud-room-id');
+      input.select();
+      document.execCommand('copy');
+      showToast('共有ルームIDをコピーしました');
+    }
+
+    function connectToRoom() {
+      const val = document.getElementById('input-connect-room-id').value.trim();
+      if (!val) return;
+      window.cloudState.roomId = val;
+      localStorage.setItem('cloud_room_id', val);
+      document.getElementById('cloud-room-id').value = val;
+      if (window.setupFirestoreListener) window.setupFirestoreListener();
+      toggleCloudSyncModal();
+      showToast(`ルーム [${val}] に接続しました`);
+    }
+
+    function exportDataJson() {
+      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(getFullAppState()));
+      const dlAnchorElem = document.createElement('a');
+      dlAnchorElem.setAttribute("href", dataStr);
+      dlAnchorElem.setAttribute("download", `週案データ_${formatDateISO(new Date())}.json`);
+      document.body.appendChild(dlAnchorElem);
+      dlAnchorElem.click();
+      dlAnchorElem.remove();
+    }
+
+    function importDataJson(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        try {
+          const json = JSON.parse(e.target.result);
+          window.loadFullAppState(json);
+          toggleCloudSyncModal();
+          showToast('バックアップデータを正常に読み込みました');
+        } catch (err) {
+          alert('ファイルの形式が正しくありません');
+        }
+      };
+      reader.readAsText(file);
+    }
+
+    function switchSettingsTab(tabName) {
+      ['term-config', 'rotation-config', 'daily-hours', 'curriculum-import'].forEach(t => {
+        const btn = document.getElementById(`tab-btn-${t}`);
+        const content = document.getElementById(`tab-content-${t}`);
+        if (t === tabName) {
+          btn.className = "py-3 text-xs sm:text-sm font-bold border-b-2 border-amber-600 text-amber-600 whitespace-nowrap";
+          content.classList.remove('hidden');
+        } else {
+          btn.className = "py-3 text-xs sm:text-sm font-bold border-b-2 border-transparent text-slate-500 hover:text-slate-800 whitespace-nowrap";
+          content.classList.add('hidden');
+        }
+      });
+    }
+
+    function getFullAppState() {
+      return {
+        currentGrade,
+        schoolTermsConfig,
+        rotationSettings,
+        manualPatternOverride,
+        dailyGradeHoursConfig,
+        calendarEventsMap,
+        timetablePatterns,
+        gradeCurriculumDatabase,
+        weeklySchedulesMap
+      };
+    }
+
+    window.loadFullAppState = function(state) {
+      if (!state) return;
+      if (state.currentGrade) currentGrade = state.currentGrade;
+      if (state.schoolTermsConfig) schoolTermsConfig = state.schoolTermsConfig;
+      if (state.rotationSettings) rotationSettings = state.rotationSettings;
+      if (state.manualPatternOverride) manualPatternOverride = state.manualPatternOverride;
+      if (state.dailyGradeHoursConfig) dailyGradeHoursConfig = state.dailyGradeHoursConfig;
+      if (state.calendarEventsMap) calendarEventsMap = state.calendarEventsMap;
+      if (state.timetablePatterns) timetablePatterns = state.timetablePatterns;
+      if (state.gradeCurriculumDatabase) gradeCurriculumDatabase = state.gradeCurriculumDatabase;
+      if (state.weeklySchedulesMap) weeklySchedulesMap = state.weeklySchedulesMap;
+
+      document.getElementById('select-current-grade').value = currentGrade;
+      if (schoolTermsConfig.term1) {
+        document.getElementById('term1-start').value = schoolTermsConfig.term1.start;
+        document.getElementById('term1-end').value = schoolTermsConfig.term1.end;
+      }
+      if (schoolTermsConfig.term2) {
+        document.getElementById('term2-start').value = schoolTermsConfig.term2.start;
+        document.getElementById('term2-end').value = schoolTermsConfig.term2.end;
+      }
+      if (schoolTermsConfig.term3) {
+        document.getElementById('term3-start').value = schoolTermsConfig.term3.start;
+        document.getElementById('term3-end').value = schoolTermsConfig.term3.end;
+      }
+
+      document.getElementById('rotation-sequence-type').value = rotationSettings.sequenceType;
+      document.getElementById('rotation-start-date').value = rotationSettings.startDate;
+      document.getElementById('rotation-start-pattern').value = rotationSettings.startPattern;
+
+      renderTimetable();
+    };
+
+    function triggerCloudSync() {
+      if (window.syncToCloud) {
+        window.syncToCloud(getFullAppState());
+      }
+    }
+
+    function showToast(message) {
+      const toast = document.getElementById('toast');
+      document.getElementById('toast-message').innerText = message;
+      toast.classList.remove('translate-y-20', 'opacity-0');
+      setTimeout(() => { toast.classList.add('translate-y-20', 'opacity-0'); }, 2500);
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      renderTimetable();
+
+      document.getElementById('btn-apply-default').addEventListener('click', applyDefaultPattern);
+
+      const curriculumModal = document.getElementById('curriculum-modal');
+      document.getElementById('btn-open-curriculum').addEventListener('click', () => {
+        document.getElementById('modal-grade-title').innerText = `${currentGrade}年生`;
+        curriculumModal.classList.remove('hidden');
+      });
+
+      const settingsModal = document.getElementById('settings-modal');
+      document.getElementById('btn-open-settings').addEventListener('click', () => {
+        settingsModal.classList.remove('hidden');
+      });
+      document.getElementById('btn-close-settings').addEventListener('click', () => settingsModal.classList.add('hidden'));
+      document.getElementById('btn-save-settings').addEventListener('click', () => {
+        renderTimetable();
+        settingsModal.classList.add('hidden');
+        showToast('設定を保存しました');
+      });
+    });
+  </script>
+</body>
+</html>
